@@ -314,12 +314,14 @@ class CPM
 		return criticalProcesses;
 	}
 
-	/* TODO
 	public List<Arrow> GetCriticalPath(WeightedDiGraph G)
 	{
 		List<Arrow> criticalProcesses = GetCriticalProcesses(G);
 		
-	}*/
+		
+
+		return null;
+	}
 }
 
 
