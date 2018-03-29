@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-// Be careful! Algorithms does not allow you to use directed graphs with cycles in them!
 
 
 struct Arrow {
@@ -79,10 +78,7 @@ struct WeightedDiGraph
 
 		foreach (Arrow a in arrowsArr)
 		{
-			if (!arrows.Contains(a))
-			{
-				arrows.Add(a);
-			}
+			arrows.Add(new Arrow(a));
 		}
 	}
 
@@ -92,10 +88,7 @@ struct WeightedDiGraph
 
 		foreach (Arrow a in arrows)
 		{
-			if (!arrows.Contains(a))
-			{
-				this.arrows.Add(a);
-			}
+			this.arrows.Add(new Arrow(a));
 		}
 	}
 
@@ -149,7 +142,7 @@ struct WeightedDiGraph
 		{
 			if (a.GetBegin() == i)
 			{
-				result.Add(a);
+				result.Add(new Arrow(a));
 			}
 		}
 
@@ -164,7 +157,7 @@ struct WeightedDiGraph
 		{
 			if (a.GetEnd() == i)
 			{
-				result.Add(a);
+				result.Add(new Arrow(a));
 			}
 		}
 
@@ -227,17 +220,21 @@ class Sorter
 
 		return result;
 	}
+
+	public static int GetTopologicalMin(WeightedDiGraph G)
+	{
+		return TopologicalSort(G)[0];
+	}
+
+	public static int GetTopologicalMax(WeightedDiGraph G)
+	{
+		List<int> sorted = TopologicalSort(G);
+		return sorted[sorted.Count() - 1];
+	}
 }
 
 class CPM
 {
-	/*
-		!!! ATTENTION !!!
-
-		It is important for vertices list in this method
-		to be sorted by partial order given by graph arrows.
-		In other words, order provided by Topological Sortion!
-	*/
 	public static List<Arrow> GetCriticalProcesses(WeightedDiGraph G)
 	{
 		Dictionary<int, double> earliestStart = new Dictionary<int, double>();
@@ -307,20 +304,55 @@ class CPM
 				latestStart[a.GetEnd()] - latestStart[a.GetBegin()] == a.GetWeight()
 			)
 			{
-				criticalProcesses.Add(a);
+				criticalProcesses.Add(new Arrow(a));
 			}
 		}
 
 		return criticalProcesses;
 	}
 
-	public List<Arrow> GetCriticalPath(WeightedDiGraph G)
-	{
-		List<Arrow> criticalProcesses = GetCriticalProcesses(G);
-		
-		
 
-		return null;
+	public static List<Arrow> GetCriticalPath(WeightedDiGraph G)
+	{
+		WeightedDiGraph subgraph = new WeightedDiGraph(GetCriticalProcesses(G));
+		List<Arrow> outcomingArrows = subgraph.GetArrowsFrom(Sorter.GetTopologicalMin(G));
+		List<Arrow> resultPath = new List<Arrow>();
+
+		foreach (Arrow a in outcomingArrows)
+		{
+			DFS(subgraph, a, resultPath, Sorter.GetTopologicalMax(G));
+		}
+
+		resultPath.Reverse();
+		return resultPath;
+	}
+
+	private static bool DFS
+	(
+		WeightedDiGraph G,
+		Arrow current,
+		List<Arrow> resultPath,
+		int sink
+	)
+	{
+		if (current.GetEnd() == sink)
+		{
+			resultPath.Add(new Arrow(current));
+			return true;
+		}
+
+		List<Arrow> outcomingArrows = G.GetArrowsFrom(current.GetEnd());
+
+		foreach (Arrow a in outcomingArrows)
+		{
+			if (DFS(G, a, resultPath, sink))
+			{
+				resultPath.Add(current);
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
 
@@ -353,7 +385,7 @@ class CPMTester
 	static void Main(string[] args)
 	{
 		WeightedDiGraph G_1 = GraphReader.read("network_example_2");
-		List<Arrow> criticalPath = CPM.GetCriticalProcesses(G_1);
+		List<Arrow> criticalPath = CPM.GetCriticalPath(G_1);
 
 		double summ = 0;
 		foreach (Arrow a in criticalPath)
@@ -362,6 +394,6 @@ class CPMTester
 			summ += a.GetWeight();
 		}
 
-		Console.WriteLine("summ = " + summ);
+		Console.WriteLine("summ=" + summ);
 	}
 }
