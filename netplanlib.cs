@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-
-
 struct Arrow {
 	private int begin;
 	private int end;
@@ -169,8 +167,6 @@ struct WeightedDiGraph
 		return arrows.Contains(new Arrow(i, j));
 	}
 }
-
-
 
 
 class Sorter
@@ -376,24 +372,5 @@ class GraphReader
 		}
 
 		return new WeightedDiGraph(arrows);
-	}
-}
-
-
-class CPMTester
-{
-	static void Main(string[] args)
-	{
-		WeightedDiGraph G_1 = GraphReader.read("network_example_2");
-		List<Arrow> criticalPath = CPM.GetCriticalPath(G_1);
-
-		double summ = 0;
-		foreach (Arrow a in criticalPath)
-		{
-			Console.WriteLine(a);
-			summ += a.GetWeight();
-		}
-
-		Console.WriteLine("summ=" + summ);
 	}
 }
