@@ -1,2 +1,2 @@
 # NetworkPlanningCSharp
-Critical path method (CPM) implementation with IO.
+Critical path method (CPM) implementation with GUI.
