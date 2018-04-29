@@ -23,34 +23,41 @@ namespace App
 		private const string TITLE = "Network Planning";
 
 		private int vertices = 20;
-		private List<TextBox> matrix;
+		private int textBoxCount;
+		private long solutionNumber;
+		private TextBox solutionBox;
 		private WeightedDiGraph G;
 		private bool loaded = false;
+
+		private TabControl tabControl;
+		private TabPage paramTab, solutionTab;
 
 		public Window()
 		{
 			InitializeFields();
 			InitializeComponent();
-			this.FormBorderStyle = FormBorderStyle.FixedSingle;
 		}
 
 		private void InitializeFields()
 		{
-			this.matrix = new List<TextBox>();
 			this.SuspendLayout();
 			this.ClientSize = new System.Drawing.Size(WIDTH, HEIGHT);
 			this.Text = TITLE;
 			this.ResumeLayout(false);
 			this.PerformLayout();
+			this.FormBorderStyle = FormBorderStyle.FixedSingle;
+			this.solutionBox = new TextBox();
 		}
 
 		private void InitializeComponent()
 		{
-			matrix.Clear();
+			InitializeTabs();
+
+			textBoxCount = 0;
 
 			Label verticesNumberField = new Label();
 			verticesNumberField.Text = " = " + vertices;
-			verticesNumberField.Left = 3 * LEFT_MARGIN / 2 + TEXT_BOX_WIDTH;
+			verticesNumberField.Left = 3 * LEFT_MARGIN / 2 + 15 * TEXT_BOX_WIDTH / 10;
 			verticesNumberField.Top = TOP_MARGIN / 4 + 4;
 			verticesNumberField.Font = new Font("Georgia", 8);
 			verticesNumberField.SetBounds
@@ -58,7 +65,7 @@ namespace App
 				verticesNumberField.Location.X, verticesNumberField.Location.Y,
 				TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT
 			);
-			this.Controls.Add(verticesNumberField);
+			paramTab.Controls.Add(verticesNumberField);
 
 			Label label = new Label();
 			label.Left = LEFT_MARGIN;
@@ -66,7 +73,7 @@ namespace App
 			label.Font = new Font("Georgia", 8);
 			label.Text = "Maximal number\nof vertices";
 			label.SetBounds(label.Location.X, label.Location.Y, 128, 37);
-			this.Controls.Add(label);
+			paramTab.Controls.Add(label);
 
 			for (int i = 0; i < vertices * vertices; i++)
 				AddTextBox();
@@ -79,7 +86,7 @@ namespace App
 			SolveButton.Text = "Solve";
 			SolveButton.Font = new Font("Georgia", 16);
 			SolveButton.Click += new EventHandler(SolveButton_Click);
-			Controls.Add(SolveButton);
+			paramTab.Controls.Add(SolveButton);
 
 			Button loadButton = new Button();
 			loadButton.Left = 13 * LEFT_MARGIN;
@@ -88,7 +95,7 @@ namespace App
 			loadButton.Click += new EventHandler(LoadButton_Click);
 			loadButton.Text = "Load from file";
 			loadButton.SetBounds(loadButton.Location.X, loadButton.Location.Y, 128, 22);
-			this.Controls.Add(loadButton);
+			paramTab.Controls.Add(loadButton);
 
 			Label pathLabel = new Label();
 			pathLabel.Left = 12 * LEFT_MARGIN;
@@ -96,7 +103,7 @@ namespace App
 			pathLabel.Font = new Font("Georgia", 8);
 			pathLabel.Text = "Path: ";
 			pathLabel.SetBounds(pathLabel.Location.X, pathLabel.Location.Y, 50, 37);
-			this.Controls.Add(pathLabel);
+			paramTab.Controls.Add(pathLabel);
 			
 			TextBox pathBox = new TextBox();
 			pathBox.Left = 13 * LEFT_MARGIN;
@@ -104,7 +111,28 @@ namespace App
 			pathBox.Font = new Font("Georgia", 8);
 			pathBox.Name = "path";
 			pathBox.SetBounds(pathBox.Location.X, pathBox.Location.Y, 275, 20);
-			this.Controls.Add(pathBox);
+			paramTab.Controls.Add(pathBox);
+
+			solutionBox.Font = new Font("Georgia", 12);
+			solutionBox.ScrollBars = ScrollBars.Both;
+			solutionBox.Multiline = true;
+			solutionBox.ReadOnly = true;
+			solutionBox.SetBounds(solutionBox.Location.X, solutionBox.Location.Y, WIDTH, HEIGHT);
+			solutionTab.Controls.Add(solutionBox);
+		}
+
+		private void InitializeTabs()
+		{
+			tabControl = new TabControl();
+
+			paramTab = new TabPage();
+			solutionTab = new TabPage();
+			paramTab.Text = "Parameters";
+			solutionTab.Text = "Solution";
+
+			tabControl.Controls.AddRange(new Control[] {paramTab, solutionTab});
+			tabControl.Size = new Size(WIDTH, HEIGHT);
+			Controls.AddRange(new Control[] {tabControl});
 		}
 
 		private void SolveButton_Click(object sender, EventArgs e)
@@ -126,16 +154,17 @@ namespace App
 			}
 
 			List<Arrow> cp = CPM.GetCriticalPath(G);
-			string answer = "Critical path: " + cp[0].GetBegin();
+			solutionBox.Text += "Solution #" + solutionNumber + ":\nCritical path: " + cp[0].GetBegin();
 
 			double summWeight = 0;
 			foreach (Arrow a in cp)
 			{
 				summWeight += a.GetWeight();
-				answer += ", " + a.GetEnd();
+				solutionBox.Text += ", " + a.GetEnd();
 			}
-
-			MessageBox.Show(answer + "\nWieght = " + summWeight);
+			solutionBox.Text += ";\nSumm weight = " + summWeight + ".\n\n";
+			solutionNumber++;
+			MessageBox.Show("Information on \'Solution\' tab\nhas been refreshed.");
 		}
 
 		private void LoadButton_Click(object sender, EventArgs e)
@@ -150,43 +179,49 @@ namespace App
 			loaded = true;
 		}
 
+		private void TextBox_Leave(object sender, EventArgs e)
+		{
+			loaded = false;
+		}
+
 		private void AddTextBox()
 		{
-			TextBox box = new System.Windows.Forms.TextBox();
+			TextBox box = new TextBox();
 
 			box.Text = "-1";
 			box.AcceptsReturn = true;
 			box.AcceptsTab = true;
-			box.Name = (matrix.Count() / vertices + 1) + "," + (matrix.Count() % vertices + 1);
-			box.Left = LEFT_MARGIN + TEXT_BOX_WIDTH * (matrix.Count() % vertices);
-			box.Top = TOP_MARGIN + TEXT_BOX_HEIGHT * (matrix.Count() / vertices);
+			box.Name = (textBoxCount / vertices + 1) + "," + (textBoxCount % vertices + 1);
+			box.Leave += new EventHandler(TextBox_Leave);
+			box.Left = LEFT_MARGIN + TEXT_BOX_WIDTH * (textBoxCount % vertices);
+			box.Top = TOP_MARGIN + TEXT_BOX_HEIGHT * (textBoxCount / vertices);
 			box.SetBounds(box.Location.X, box.Location.Y, TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT);
 			box.MaxLength = 10;
 
-			if (matrix.Count() < vertices)
+			if (textBoxCount < vertices)
 			{
 				Label label = new Label();
 
-				label.Text = 1 + matrix.Count() + "";
+				label.Text = 1 + textBoxCount + "";
 				label.Left = box.Left + 5;
 				label.Top = TOP_MARGIN - 15;
 				label.Font = new Font("Georgia", 8);
 				label.SetBounds(label.Location.X, label.Location.Y, 15, 15);
-				this.Controls.Add(label);
+				paramTab.Controls.Add(label);
 			}
-			if ((matrix.Count() - 1) % vertices == 0)
+			if ((textBoxCount - 1) % vertices == 0)
 			{
 				Label label = new Label();
-				label.Text = 1 + matrix.Count() / vertices + "";
+				label.Text = 1 + textBoxCount / vertices + "";
 				label.Left = LEFT_MARGIN - 15;
 				label.Top = box.Top;
 				label.Font = new Font("Georgia", 8);
 				label.SetBounds(label.Location.X, label.Location.Y, 15, 15);
-				this.Controls.Add(label);
+				paramTab.Controls.Add(label);
 			}
 
-			this.Controls.Add(box);
-			this.matrix.Add(box);
+			paramTab.Controls.Add(box);
+			textBoxCount++;
 		}
 
 		static void Main()
