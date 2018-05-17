@@ -12,8 +12,8 @@ namespace App
 {
 	public class Window : Form
 	{
-		private int WIDTH = 1098;
-		private int HEIGHT = 640;
+		private int WIDTH = 1009;
+		private int HEIGHT = 600;
 
 		private int TOP_MARGIN = 100;
 		private int LEFT_MARGIN = 50;
@@ -22,7 +22,7 @@ namespace App
 
 		private const string TITLE = "Network Planning";
 
-		private int vertices = 20;
+		private int vertices = 18;
 		private int textBoxCount;
 		private long solutionNumber;
 		private TextBox solutionBox;
@@ -137,34 +137,44 @@ namespace App
 
 		private void SolveButton_Click(object sender, EventArgs e)
 		{
-			if (!loaded)
-			{
-				List<Arrow> arrows = new List<Arrow>();
-
-				for (int i = 1; i <= vertices; i++)
-					for (int j = 1; j <= vertices; j++)
+			List<Arrow> cp;
+			var thread = new Thread
+			(
+				() =>
+				{
+					if (!loaded)
 					{
-						double weight = Convert.ToDouble(Controls.Find(i + "," + j, true)[0].Text);
+						List<Arrow> arrows = new List<Arrow>();
 
-						if (weight >= 0)
-							arrows.Add(new Arrow(i, j, weight));
+						for (int i = 1; i <= vertices; i++)
+							for (int j = 1; j <= vertices; j++)
+							{
+								double weight = Convert.ToDouble(Controls.Find(i + "," + j, true)[0].Text);
+
+								if (weight >= 0)
+								arrows.Add(new Arrow(i, j, weight));
+							}
+
+						G = new WeightedDiGraph(arrows);
 					}
 
-				G = new WeightedDiGraph(arrows);
-			}
+					cp = CPM.GetCriticalPath(G);
 
-			List<Arrow> cp = CPM.GetCriticalPath(G);
-			solutionBox.Text += "Solution #" + solutionNumber + ":\nCritical path: " + cp[0].GetBegin();
+					solutionBox.Text += "Solution #" + solutionNumber + ":\nCritical path: " + cp[0].GetBegin();
 
-			double summWeight = 0;
-			foreach (Arrow a in cp)
-			{
-				summWeight += a.GetWeight();
-				solutionBox.Text += ", " + a.GetEnd();
-			}
-			solutionBox.Text += ";\nSumm weight = " + summWeight + ".\n\n";
-			solutionNumber++;
-			MessageBox.Show("Information on \'Solution\' tab\nhas been refreshed.");
+					double summWeight = 0;
+					foreach (Arrow a in cp)
+					{
+						summWeight += a.GetWeight();
+						solutionBox.Text += ", " + a.GetEnd();
+					}
+					solutionBox.Text += ";\nSumm weight = " + summWeight + ".\n\n";
+					solutionNumber++;
+				}
+			);
+
+			thread.Start();
+			thread.Join();
 		}
 
 		private void LoadButton_Click(object sender, EventArgs e)
