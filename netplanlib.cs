@@ -385,7 +385,4 @@ namespace netplanlib {
 			return new WeightedDiGraph(arrows);
 		}
 	}
-
-
-	
 }

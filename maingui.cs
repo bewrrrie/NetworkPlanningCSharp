@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Threading;
+using System.Diagnostics;
 
 using netplanlib;
 
@@ -152,7 +153,7 @@ namespace App
 								double weight = Convert.ToDouble(Controls.Find(i + "," + j, true)[0].Text);
 
 								if (weight >= 0)
-								arrows.Add(new Arrow(i, j, weight));
+									arrows.Add(new Arrow(i, j, weight));
 							}
 
 						G = new WeightedDiGraph(arrows);
@@ -175,6 +176,16 @@ namespace App
 
 			thread.Start();
 			thread.Join();
+
+			/*
+			string args = vertices.ToString();
+
+			for (int i = 1; i <= vertices; i++)
+				for (int j = 1; j <= vertices; j++)
+					args += " " + Controls.Find(i + "," + j, true)[0].Text;
+			solutionBox.Text += "Solution #" + solutionNumber + ExecutableSolve(args);
+			solutionNumber++;
+			*/
 		}
 
 		private void LoadButton_Click(object sender, EventArgs e)
@@ -241,5 +252,23 @@ namespace App
 			Application.Run(new Window());
 		}
 
+
+//NEVERMIND (...
+/*		private string ExecutableSolve(string args)
+		{
+			Process p = new Process();
+			p.StartInfo.FileName = "netplanmain.exe";
+			p.StartInfo.Arguments = args;
+			p.StartInfo.UseShellExecute = false;
+			p.StartInfo.RedirectStandardOutput = true;
+			p.StartInfo.RedirectStandardError = true;
+
+			p.Start();
+			String output = (String) p.StandardOutput.ReadToEnd();
+			p.Close();
+
+			return output;
+		}*/
+//...) NEVERMIND
 	}
 }
